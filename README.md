@@ -2,84 +2,143 @@
 
 Expose live browser state (DOM, Network, Console, Styles, Layout) as structured MCP tools for AI agents like Cursor.
 
+## Architecture
+
+```
+Chrome Extension ←→ Native Messaging ←→ brms-host (Node.js) ←→ Cursor (HTTP MCP)
+```
+
+- **Chrome Extension** (Manifest V3): Captures DOM, network, console, styles, screenshots natively
+- **brms-host** (Node.js): MCP server on `http://localhost:3100/mcp` using Streamable HTTP transport
+- **Native Messaging**: Chrome's built-in IPC between the extension and the host process
+
 ## Quick Start
 
-### 1. Install and build
+### 1. Install the native messaging host
 
 ```bash
-npm install
-npm run build
+cd host && npm install && npm run build
+npx brms-host install
 ```
 
-### 2. Launch Chrome with remote debugging
+### 2. Load the Chrome extension
 
-```bash
-# macOS
-/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+1. Open `chrome://extensions`
+2. Enable **Developer mode**
+3. Click **Load unpacked** → select the `extension/` folder
 
-# Linux
-google-chrome --remote-debugging-port=9222
+### 3. Configure Cursor
 
-# Windows
-chrome.exe --remote-debugging-port=9222
+Add to your project's `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "brms": {
+      "url": "http://localhost:3100/mcp"
+    }
+  }
+}
 ```
 
-### 3. Use with Cursor
-
-The `.cursor/mcp.json` is already configured. Restart Cursor, then use the tools in Agent mode:
-
-- "Connect to my browser and show me the open tabs"
-- "Get the DOM tree of the current page"
-- "Show me all failed network requests"
-- "Why is the submit button not clickable?"
-
-## Available Tools
+## Available Tools (15)
 
 ### Connection
 | Tool | Description |
 |------|-------------|
-| `connect_browser` | Connect to Chrome via CDP |
-| `list_pages` | List open browser tabs |
-| `select_page` | Select a tab for inspection |
+| `connect_browser` | Connect to browser via the Chrome Extension |
+| `list_pages` | List all open tabs |
+| `select_page` | Select a tab by index |
 
-### Inspection
+### DOM Inspection
 | Tool | Description |
 |------|-------------|
-| `get_network_calls` | Captured network requests with filters |
-| `get_dom_tree` | DOM tree snapshot |
-| `query_dom` | CSS selector query |
+| `get_dom_tree` | Full or scoped DOM tree snapshot |
+| `query_dom` | CSS selector query with attributes |
+
+### Network
+| Tool | Description |
+|------|-------------|
+| `get_network_calls` | Captured network requests with filtering |
+
+### Console
+| Tool | Description |
+|------|-------------|
 | `get_console_errors` | Console errors and warnings |
 
 ### Styles & Layout
 | Tool | Description |
 |------|-------------|
-| `get_computed_styles` | Computed CSS for elements |
-| `get_layout_info` | Bounding box and visibility |
-| `get_visible_elements` | Interactive elements in viewport |
-| `capture_screenshot` | Full page or element screenshot |
+| `get_computed_styles` | Computed CSS with ancestor chain and pseudo-elements |
+| `get_layout_info` | Bounding box, visibility, overlap, clipping, scroll |
+| `get_visible_elements` | Interactive elements in viewport with a11y info |
+
+### Visual
+| Tool | Description |
+|------|-------------|
+| `capture_screenshot` | Page or element screenshot with highlight option |
+
+### Events
+| Tool | Description |
+|------|-------------|
+| `get_event_listeners` | Event listeners via Chrome DevTools Protocol |
 
 ### AI Debugging
 | Tool | Description |
 |------|-------------|
-| `debug_element` | Diagnose element issues (visibility, clickability, overlaps) |
-| `diagnose_network` | Analyze failed/slow network requests |
+| `debug_element` | 11-point diagnostic for clickability/visibility |
+| `diagnose_network` | Timing, CORS, rate limiting, error body analysis |
 | `correlate_issues` | Cross-reference network, console, and DOM issues |
 
-## Architecture
+## Project Structure
 
 ```
-Chrome (CDP :9222)
-  ↕ Playwright connectOverCDP
-BRMS Node.js Process
-  ├── Browser Layer (connection, network, DOM, console)
-  ├── Tools Layer (MCP tool handlers)
-  └── StdioServerTransport → Cursor
+golliath/
+├── shared/
+│   └── protocol.ts            # Message types (host ↔ extension)
+├── extension/
+│   ├── manifest.json          # Chrome MV3 manifest
+│   ├── background.js          # Service worker (native messaging, debugger, routing)
+│   ├── content.js             # DOM operations (styles, layout, debug)
+│   ├── popup.html/js/css      # Setup wizard + status UI
+│   └── icons/
+├── host/
+│   ├── package.json           # Publishable as "brms-host"
+│   ├── tsconfig.json
+│   └── src/
+│       ├── index.ts           # HTTP server + Streamable HTTP transport
+│       ├── server.ts          # McpServer + 15 tool registrations
+│       ├── bin/install.ts     # npx brms-host install
+│       ├── bridge/            # Native messaging protocol
+│       ├── browser/           # Proxy layer (via bridge)
+│       ├── tools/             # MCP tool handlers
+│       ├── types/             # TypeScript interfaces
+│       └── utils/             # Logger, error helpers
+├── package.json               # Root workspace
+└── README.md
 ```
 
 ## Development
 
 ```bash
-npm run dev    # watch mode
-npm run build  # one-time build
-npm start      # run server
+# Install all dependencies
+npm install
+
+# Build the host
+npm run build
+
+# Watch mode
+npm run dev
 ```
+
+## How It Works
+
+1. When the Chrome extension starts, it connects to the native messaging host
+2. The host starts an HTTP server on port 3100
+3. Cursor connects to `http://localhost:3100/mcp` via Streamable HTTP MCP transport
+4. Tool calls flow: **Cursor → Host → Extension → Browser → Extension → Host → Cursor**
+5. Network and console data are pushed from the extension in real time
+
+## License
+
+MIT

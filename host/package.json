@@ -1,0 +1,35 @@
+{
+  "name": "brms-host",
+  "version": "1.0.0",
+  "description": "Native messaging host for BRMS Chrome Extension — bridges browser state to Cursor via MCP",
+  "type": "module",
+  "bin": {
+    "brms-host": "./build/bin/install.js"
+  },
+  "main": "./build/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsc --watch"
+  },
+  "files": [
+    "build"
+  ],
+  "keywords": [
+    "mcp",
+    "browser",
+    "devtools",
+    "chrome-extension",
+    "native-messaging",
+    "ai"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^6.0.2"
+  }
+}

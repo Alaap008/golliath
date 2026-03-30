@@ -1,5 +1,5 @@
 /**
- * All logging goes to stderr so stdout remains clean for MCP JSON-RPC.
+ * All logging goes to stderr so stdout remains clean for native messaging.
  */
 
 const PREFIX = '[brms]';

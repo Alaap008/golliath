@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=360">
+  <title>BRMS</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <img src="icons/icon48.png" alt="BRMS" width="24" height="24">
+        <h1>BRMS</h1>
+      </div>
+      <span class="badge" id="statusBadge">Disconnected</span>
+    </header>
+
+    <!-- Setup View -->
+    <div id="setupView" class="view">
+      <h2>Quick Setup</h2>
+      <p class="subtitle">Two steps to connect your browser to Cursor</p>
+
+      <div class="step">
+        <div class="step-header">
+          <span class="step-num">1</span>
+          <span>Install the native host</span>
+        </div>
+        <div class="code-block">
+          <code id="installCmd">npx brms-host install</code>
+          <button class="copy-btn" data-target="installCmd" title="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <span class="step-num">2</span>
+          <span>Add to Cursor MCP config</span>
+        </div>
+        <div class="code-block">
+          <code id="mcpConfig">{
+  "mcpServers": {
+    "brms": {
+      "url": "http://localhost:3100/mcp"
+    }
+  }
+}</code>
+          <button class="copy-btn" data-target="mcpConfig" title="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <p class="hint">Paste into <code>.cursor/mcp.json</code> in your project root</p>
+      </div>
+    </div>
+
+    <!-- Status View -->
+    <div id="statusView" class="view hidden">
+      <div class="status-grid">
+        <div class="status-item">
+          <span class="label">Host</span>
+          <span class="value" id="hostStatus">--</span>
+        </div>
+        <div class="status-item">
+          <span class="label">Active Tab</span>
+          <span class="value" id="activeTab">None</span>
+        </div>
+        <div class="status-item">
+          <span class="label">Network</span>
+          <span class="value" id="networkCount">0 entries</span>
+        </div>
+        <div class="status-item">
+          <span class="label">Console</span>
+          <span class="value" id="consoleCount">0 entries</span>
+        </div>
+      </div>
+      <button id="disconnectBtn" class="btn-secondary">Disconnect</button>
+    </div>
+
+    <footer>
+      <a href="https://github.com/alaapb/brms" target="_blank">GitHub</a>
+      <span class="version" id="versionLabel">v1.0.0</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

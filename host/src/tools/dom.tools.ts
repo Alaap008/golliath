@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { browserManager } from '../browser/connection.js';
 import { getSnapshot, queryDOM } from '../browser/dom.js';
 import { safeResult } from '../utils/errors.js';
 
@@ -14,8 +13,7 @@ export function registerDOMTools(server: McpServer): void {
     },
     async ({ selector, depth }) => {
       return safeResult(async () => {
-        const page = browserManager.getActivePage();
-        const tree = await getSnapshot(page, selector, depth);
+        const tree = await getSnapshot(selector, depth);
         return JSON.stringify(tree, null, 2);
       });
     },
@@ -29,8 +27,7 @@ export function registerDOMTools(server: McpServer): void {
     },
     async ({ selector }) => {
       return safeResult(async () => {
-        const page = browserManager.getActivePage();
-        const elements = await queryDOM(page, selector);
+        const elements = await queryDOM(selector);
 
         if (elements.length === 0) {
           return `No elements found matching selector: ${selector}`;

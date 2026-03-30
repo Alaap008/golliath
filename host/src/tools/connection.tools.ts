@@ -8,17 +8,14 @@ import { safeResult } from '../utils/errors.js';
 export function registerConnectionTools(server: McpServer): void {
   server.tool(
     'connect_browser',
-    'Connect to a running Chrome instance via Chrome DevTools Protocol (CDP). Chrome must be launched with --remote-debugging-port.',
-    { endpoint: z.string().optional().describe('CDP endpoint URL (default: http://localhost:9222)') },
-    async ({ endpoint }) => {
+    'Connect to the browser via the BRMS Chrome Extension. The extension must be installed and active.',
+    {},
+    async () => {
       return safeResult(async () => {
-        const pages = await browserManager.connect(endpoint);
+        const pages = await browserManager.connect();
 
-        if (pages.length > 0) {
-          const page = browserManager.getActivePage();
-          networkMonitor.attach(page);
-          consoleCapture.attach(page);
-        }
+        networkMonitor.attach();
+        consoleCapture.attach();
 
         return JSON.stringify({ connected: true, pages }, null, 2);
       });
@@ -39,14 +36,11 @@ export function registerConnectionTools(server: McpServer): void {
 
   server.tool(
     'select_page',
-    'Select an open browser tab by index for subsequent inspection. Attaches network and console monitors to the selected page.',
+    'Select an open browser tab by index for subsequent inspection.',
     { index: z.number().int().min(0).describe('Zero-based index of the page to select') },
     async ({ index }) => {
       return safeResult(async () => {
         const info = await browserManager.selectPage(index);
-        const page = browserManager.getActivePage();
-        networkMonitor.attach(page);
-        consoleCapture.attach(page);
         return JSON.stringify(info, null, 2);
       });
     },

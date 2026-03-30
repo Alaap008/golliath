@@ -12,14 +12,14 @@ export class BRMSError extends Error {
 
 export function notConnected(): BRMSError {
   return new BRMSError(
-    'Not connected to a browser. Call connect_browser first.',
+    'Extension not connected. Ensure the BRMS Chrome Extension is installed and active.',
     'NOT_CONNECTED',
   );
 }
 
 export function noActivePage(): BRMSError {
   return new BRMSError(
-    'No active page selected. Call select_page first.',
+    'No active tab selected. Call select_page first.',
     'NO_ACTIVE_PAGE',
   );
 }

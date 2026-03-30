@@ -1,8 +1,7 @@
 {
   "mcpServers": {
     "brms": {
-      "command": "node",
-      "args": ["./build/index.js"]
+      "url": "http://localhost:3100/mcp"
     }
   }
 }

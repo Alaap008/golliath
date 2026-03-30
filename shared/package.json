@@ -1,0 +1,8 @@
+{
+  "name": "@brms/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./protocol.ts"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "@brms/extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BRMS Chrome Extension"
+}
