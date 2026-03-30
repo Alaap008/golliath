@@ -18,7 +18,8 @@ export type BrmsRequestType =
   | 'remove_highlight'
   | 'screenshot'
   | 'get_event_listeners'
-  | 'correlate_dom_check';
+  | 'correlate_dom_check'
+  | 'get_element_rect';
 
 export interface BrmsRequest {
   id: string;

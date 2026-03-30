@@ -14,6 +14,10 @@ const disconnectBtn = document.getElementById('disconnectBtn');
 
 versionLabel.textContent = `v${chrome.runtime.getManifest().version}`;
 
+const installCmd = document.getElementById('installCmd');
+const extId = chrome.runtime.id;
+installCmd.textContent = `npx brms-host install --extension-id=${extId}`;
+
 // ── Copy buttons ────────────────────────────────────────────────
 
 document.querySelectorAll('.copy-btn').forEach((btn) => {

@@ -5,7 +5,6 @@
   "description": "Expose live browser state (DOM, Network, Console, Styles) as MCP tools for AI agents like Cursor.",
   "permissions": [
     "debugger",
-    "webRequest",
     "tabs",
     "activeTab",
     "scripting",

@@ -14,18 +14,29 @@ Chrome Extension ←→ Native Messaging ←→ brms-host (Node.js) ←→ Curso
 
 ## Quick Start
 
-### 1. Install the native messaging host
-
-```bash
-cd host && npm install && npm run build
-npx brms-host install
-```
-
-### 2. Load the Chrome extension
+### 1. Load the Chrome extension
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked** → select the `extension/` folder
+4. Copy the **extension ID** from the card (32-character string)
+
+### 2. Install the native messaging host
+
+**If `brms-host` is published on npm:**
+
+```bash
+npx brms-host install --extension-id=<your-extension-id>
+```
+
+**If running from source:**
+
+```bash
+cd host
+npm install
+npm run build
+node build/bin/install.js install --extension-id=<your-extension-id>
+```
 
 ### 3. Configure Cursor
 
@@ -40,6 +51,10 @@ Add to your project's `.cursor/mcp.json`:
   }
 }
 ```
+
+### 4. Verify
+
+Click the BRMS extension icon in Chrome — it should show **Connected**. Then ask Cursor: *"Connect to my browser and list the open tabs."*
 
 ## Available Tools (15)
 
@@ -131,6 +146,8 @@ npm run build
 npm run dev
 ```
 
+After making changes to the host, reload the BRMS extension in Chrome to pick up the new build.
+
 ## How It Works
 
 1. When the Chrome extension starts, it connects to the native messaging host
@@ -138,6 +155,15 @@ npm run dev
 3. Cursor connects to `http://localhost:3100/mcp` via Streamable HTTP MCP transport
 4. Tool calls flow: **Cursor → Host → Extension → Browser → Extension → Host → Cursor**
 5. Network and console data are pushed from the extension in real time
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| Popup shows "Disconnected" | Reload the extension on `chrome://extensions` |
+| "Native host has exited" error | Run the install command again with the correct extension ID |
+| Port 3100 already in use | Kill stale host: `lsof -ti :3100 \| xargs kill` then reload extension |
+| Tools return "Extension not connected" | Call `connect_browser` first |
 
 ## License
 

@@ -496,6 +496,32 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   }
 });
 
+// ── Messages from popup / other extension pages ─────────────────
+
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg.action === 'disconnect') {
+    if (nativePort) {
+      nativePort.disconnect();
+      nativePort = null;
+    }
+    activeTabId = null;
+    debuggerAttached.clear();
+    networkEnabled.clear();
+    runtimeEnabled.clear();
+    pendingRequests.clear();
+    sendResponse({ ok: true });
+  }
+
+  if (msg.action === 'get_status') {
+    sendResponse({
+      connected: nativePort !== null,
+      activeTabId,
+    });
+  }
+
+  return false;
+});
+
 // ── Auto-connect on install / startup ───────────────────────────
 
 chrome.runtime.onStartup.addListener(() => connectNative());
