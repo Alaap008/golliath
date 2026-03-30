@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "brms": {
+      "command": "node",
+      "args": ["./build/index.js"]
+    }
+  }
+}

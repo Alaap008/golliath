@@ -1,0 +1,35 @@
+{
+  "name": "brms",
+  "version": "0.1.0",
+  "description": "Browser Runtime MCP Server — expose live browser state as structured MCP tools for AI agents",
+  "type": "module",
+  "bin": {
+    "brms": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsc --watch"
+  },
+  "files": [
+    "build"
+  ],
+  "keywords": [
+    "mcp",
+    "browser",
+    "devtools",
+    "cdp",
+    "debugging",
+    "ai"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "playwright": "^1.58.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^6.0.2"
+  }
+}
