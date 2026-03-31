@@ -165,6 +165,11 @@ After making changes to the host, reload the BRMS extension in Chrome to pick up
 | Port 3100 already in use | Kill stale host: `lsof -ti :3100 \| xargs kill` then reload extension |
 | Tools return "Extension not connected" | Call `connect_browser` first |
 
+## Privacy
+
+Chrome Web Store publication requires a privacy policy for this extension's permissions profile.  
+Use `PRIVACY_POLICY.md` in this repo (or host an equivalent policy URL) for your listing.
+
 ## License
 
 MIT
