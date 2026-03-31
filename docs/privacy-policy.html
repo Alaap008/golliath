@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BRMS Privacy Policy</title>
+  <meta name="description" content="Privacy Policy for BRMS, the Browser Runtime MCP Server Chrome extension.">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0b1020;
+      --panel: #121a2f;
+      --text: #e8ecf8;
+      --muted: #aab4d6;
+      --accent: #7aa2ff;
+      --border: rgba(255, 255, 255, 0.12);
+      --shadow: rgba(0, 0, 0, 0.28);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f5f7fb;
+        --panel: #ffffff;
+        --text: #162033;
+        --muted: #4c5b79;
+        --accent: #2358d8;
+        --border: rgba(22, 32, 51, 0.12);
+        --shadow: rgba(20, 30, 50, 0.08);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 88%, black));
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    .wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 20px 72px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px;
+      box-shadow: 0 18px 40px var(--shadow);
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.1;
+    }
+
+    .effective {
+      margin: 0 0 28px;
+      color: var(--muted);
+    }
+
+    h2 {
+      margin-top: 34px;
+      margin-bottom: 10px;
+      font-size: 1.25rem;
+    }
+
+    p, li {
+      color: var(--text);
+    }
+
+    ul {
+      padding-left: 22px;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: rgba(127, 127, 127, 0.12);
+      border-radius: 6px;
+      padding: 0.12rem 0.35rem;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    .footer {
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 640px) {
+      .wrap {
+        padding: 20px 14px 36px;
+      }
+
+      .card {
+        padding: 22px 18px;
+        border-radius: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <article class="card">
+      <div class="eyebrow">BRMS</div>
+      <h1>Privacy Policy</h1>
+      <p class="effective">Effective date: March 30, 2026</p>
+
+      <p>This Privacy Policy describes how BRMS ("Browser Runtime MCP Server", "the Extension", "we", "our") handles information.</p>
+
+      <h2>Summary</h2>
+      <p>BRMS is a local developer tool. It reads browser runtime state such as DOM, network metadata, console logs, and tab details so compatible local AI tools can help debug web apps.</p>
+      <p>BRMS does not operate a cloud backend. Data is processed locally on your machine via:</p>
+      <ul>
+        <li>Chrome Extension</li>
+        <li>Native Messaging Host (<code>brms-host</code>)</li>
+        <li>Local MCP endpoint (<code>http://localhost:3100</code>)</li>
+      </ul>
+
+      <h2>Information We Access</h2>
+      <p>Depending on which BRMS tools you invoke, BRMS may access:</p>
+      <ul>
+        <li>Tab information such as title, URL, and tab index</li>
+        <li>DOM content and element attributes</li>
+        <li>Computed styles and layout data</li>
+        <li>Console messages and exceptions</li>
+        <li>Network request and response metadata and selected bodies</li>
+        <li>Screenshots of the visible tab or selected elements</li>
+        <li>Event listener metadata</li>
+      </ul>
+
+      <h2>Why We Access This Information</h2>
+      <p>BRMS accesses this information only to provide browser debugging and inspection features requested by the user.</p>
+
+      <h2>How Information Is Processed</h2>
+      <ul>
+        <li>Data is read from your browser through Chrome Extension APIs.</li>
+        <li>Data is sent to the local Native Messaging Host on your machine.</li>
+        <li>Data is exposed to local MCP clients, for example Cursor, via <code>http://localhost:3100/mcp</code>.</li>
+        <li>No BRMS-operated remote server is required for normal operation.</li>
+      </ul>
+
+      <h2>Data Sharing</h2>
+      <p>BRMS itself does not sell or broker personal data.</p>
+      <p>Data may be shared with software you choose to connect, for example an AI assistant client, based on your own prompts and configuration. Review your AI tool provider's privacy terms separately.</p>
+
+      <h2>Data Retention</h2>
+      <p>BRMS keeps short in-memory buffers for recent console and network entries to enable debugging features.</p>
+      <ul>
+        <li>These buffers are not intended as permanent storage.</li>
+        <li>Data is cleared when the host process stops, unless your environment separately logs it.</li>
+      </ul>
+
+      <h2>Security</h2>
+      <p>BRMS is designed for local use. You are responsible for securing your development machine and controlling which websites and tools you use BRMS with.</p>
+
+      <h2>Permissions</h2>
+      <p>BRMS requests permissions needed for debugging features, including:</p>
+      <ul>
+        <li><code>debugger</code></li>
+        <li><code>tabs</code></li>
+        <li><code>activeTab</code></li>
+        <li><code>scripting</code></li>
+        <li><code>nativeMessaging</code></li>
+        <li>host access (<code>&lt;all_urls&gt;</code>)</li>
+      </ul>
+      <p>These permissions are used only to provide extension functionality.</p>
+
+      <h2>Your Choices</h2>
+      <p>You can stop BRMS at any time by:</p>
+      <ul>
+        <li>Disabling or removing the Chrome extension</li>
+        <li>Closing Chrome</li>
+        <li>Stopping the <code>brms-host</code> process</li>
+        <li>Removing BRMS from your MCP configuration</li>
+      </ul>
+
+      <h2>Children's Privacy</h2>
+      <p>BRMS is not directed to children.</p>
+
+      <h2>Changes to This Policy</h2>
+      <p>We may update this policy from time to time. Updates will be posted at the policy URL with a revised effective date.</p>
+
+      <h2>Contact</h2>
+      <p>For questions about this Privacy Policy, open an issue at <a href="https://github.com/Alaap008/golliath/issues">github.com/Alaap008/golliath/issues</a>.</p>
+
+      <p class="footer">BRMS is a local-first browser debugging tool for MCP-compatible developer workflows.</p>
+    </article>
+  </main>
+</body>
+</html>
