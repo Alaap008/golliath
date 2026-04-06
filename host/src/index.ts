@@ -31,8 +31,8 @@ function debugLog(msg: string): void {
 process.on('exit', (code) => { debugLog(`Process exiting with code ${code}`); });
 process.on('uncaughtException', (err) => { debugLog(`UNCAUGHT EXCEPTION: ${err.stack ?? err.message}`); });
 process.on('unhandledRejection', (reason) => { debugLog(`UNHANDLED REJECTION: ${reason}`); });
-process.on('SIGTERM', () => debugLog('Received SIGTERM'));
-process.on('SIGINT', () => debugLog('Received SIGINT'));
+process.on('SIGTERM', () => { debugLog('Received SIGTERM — shutting down'); process.exit(0); });
+process.on('SIGINT', () => { debugLog('Received SIGINT — shutting down'); process.exit(0); });
 
 // Keep process alive even if stdin closes (native messaging host mode)
 process.stdin.on('end', () => { debugLog('stdin ended — keeping process alive'); });
