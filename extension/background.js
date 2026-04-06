@@ -22,6 +22,7 @@ let runtimeEnabled = new Set();
 let reconnectTimer = null;
 let reconnectDelay = 2000;
 const MAX_RECONNECT_DELAY = 30000;
+let intentionalDisconnect = false;
 
 // Pending network requests (requestId -> partial entry)
 const pendingRequests = new Map();
@@ -86,6 +87,7 @@ async function syncContentScripts(origins) {
 
 function scheduleReconnect() {
   if (reconnectTimer) return;
+  if (intentionalDisconnect) return; // user explicitly disconnected — don't auto-reconnect
   console.log(`[brms] Reconnecting in ${reconnectDelay}ms...`);
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
@@ -613,6 +615,11 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.action === 'disconnect') {
+    intentionalDisconnect = true; // prevent auto-reconnect
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
     if (nativePort) {
       nativePort.disconnect();
       nativePort = null;
@@ -635,7 +642,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 
   if (msg.action === 'reconnect') {
-    reconnectDelay = 2000; // reset backoff for manual reconnect
+    intentionalDisconnect = false; // user wants to reconnect — re-enable auto-reconnect
+    reconnectDelay = 2000;
     if (reconnectTimer) {
       clearTimeout(reconnectTimer);
       reconnectTimer = null;

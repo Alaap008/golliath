@@ -5,6 +5,10 @@
  *
  * - Starts an HTTP server on port 3100 exposing MCP via Streamable HTTP
  * - Starts the native messaging bridge to communicate with the Chrome extension
+ *
+ * Each Cursor connection gets its own transport + MCP server instance so that
+ * reconnects (which send a fresh `initialize`) never hit the "already initialized"
+ * error that occurs when a single transport is reused across sessions.
  */
 
 import { createServer as createHttpServer } from 'node:http';
@@ -24,74 +28,116 @@ function debugLog(msg: string): void {
   log.info(msg);
 }
 
-// Catch everything that might kill the process
-process.on('exit', (code) => {
-  debugLog(`Process exiting with code ${code}`);
-});
-process.on('uncaughtException', (err) => {
-  debugLog(`UNCAUGHT EXCEPTION: ${err.stack ?? err.message}`);
-});
-process.on('unhandledRejection', (reason) => {
-  debugLog(`UNHANDLED REJECTION: ${reason}`);
-});
+process.on('exit', (code) => { debugLog(`Process exiting with code ${code}`); });
+process.on('uncaughtException', (err) => { debugLog(`UNCAUGHT EXCEPTION: ${err.stack ?? err.message}`); });
+process.on('unhandledRejection', (reason) => { debugLog(`UNHANDLED REJECTION: ${reason}`); });
 process.on('SIGTERM', () => debugLog('Received SIGTERM'));
 process.on('SIGINT', () => debugLog('Received SIGINT'));
 
-// Keep process alive even if stdin closes
-process.stdin.on('end', () => {
-  debugLog('stdin ended — keeping process alive');
-});
+// Keep process alive even if stdin closes (native messaging host mode)
+process.stdin.on('end', () => { debugLog('stdin ended — keeping process alive'); });
 process.stdin.resume();
+
+const CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Accept, Mcp-Session-Id',
+};
 
 async function main(): Promise<void> {
   writeFileSync(DEBUG_LOG, `=== BRMS Host starting at ${new Date().toISOString()} ===\n`);
   debugLog(`PID: ${process.pid}, Node: ${process.version}`);
-  debugLog(`stdin isTTY: ${process.stdin.isTTY}, stdout isTTY: ${process.stdout.isTTY}`);
 
   bridge.start();
   debugLog('Bridge started');
 
-  const mcpServer = createServer();
-  debugLog('MCP server created');
-
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: () => randomUUID(),
-  });
-
-  const CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Accept',
-  };
+  // Session map: sessionId → transport
+  // Each Cursor connection gets its own transport so reconnects start fresh.
+  const sessions = new Map<string, StreamableHTTPServerTransport>();
 
   const httpServer = createHttpServer(async (req, res) => {
     const url = new URL(req.url ?? '/', `http://localhost:${PORT}`);
 
-    // Handle CORS preflight
+    // CORS preflight
     if (req.method === 'OPTIONS') {
       res.writeHead(204, CORS_HEADERS);
       res.end();
       return;
     }
 
-    // Attach CORS headers to every response
+    // Attach CORS to every response
     Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
+    // ── /health ────────────────────────────────────────────────
+    if (url.pathname === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ok', extensionConnected: bridge.isConnected() }));
+      return;
+    }
+
+    // ── /mcp ──────────────────────────────────────────────────
     if (url.pathname === '/mcp') {
       try {
-        // Parse body for POST requests before passing to transport
+        // Parse body once for POST requests
+        let parsedBody: unknown;
         if (req.method === 'POST') {
-          const body = await new Promise<string>((resolve, reject) => {
+          const raw = await new Promise<string>((resolve, reject) => {
             let data = '';
             req.on('data', (chunk: Buffer) => { data += chunk.toString(); });
             req.on('end', () => resolve(data));
             req.on('error', reject);
           });
-          const parsedBody = JSON.parse(body);
-          await transport.handleRequest(req, res, parsedBody);
-        } else {
-          await transport.handleRequest(req, res);
+          try {
+            parsedBody = JSON.parse(raw);
+          } catch {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid JSON' }));
+            return;
+          }
         }
+
+        const sessionId = req.headers['mcp-session-id'] as string | undefined;
+
+        if (req.method === 'POST' && !sessionId) {
+          // ── New session ────────────────────────────────────
+          // Cursor is connecting (or reconnecting). Always create a fresh
+          // transport so `initialize` succeeds even after a prior connection.
+          const newId = randomUUID();
+
+          const transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: () => newId,
+          });
+
+          transport.onclose = () => {
+            sessions.delete(newId);
+            debugLog(`Session closed: ${newId}`);
+          };
+
+          // Each session gets its own MCP server instance
+          const mcpServer = createServer();
+          await mcpServer.connect(transport);
+
+          sessions.set(newId, transport);
+          debugLog(`New MCP session: ${newId} (total: ${sessions.size})`);
+
+          await transport.handleRequest(req, res, parsedBody);
+
+        } else if (sessionId && sessions.has(sessionId)) {
+          // ── Existing session ───────────────────────────────
+          await sessions.get(sessionId)!.handleRequest(req, res, parsedBody);
+
+        } else if (sessionId && !sessions.has(sessionId)) {
+          // Unknown session — client should reconnect with a fresh initialize
+          debugLog(`Unknown session ID: ${sessionId}`);
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Session not found. Send a new initialize request without Mcp-Session-Id.' }));
+
+        } else {
+          // GET/DELETE without session ID
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Mcp-Session-Id header required' }));
+        }
+
       } catch (err) {
         debugLog(`MCP request error: ${err instanceof Error ? err.stack : err}`);
         if (!res.headersSent) {
@@ -102,22 +148,13 @@ async function main(): Promise<void> {
       return;
     }
 
-    if (url.pathname === '/health') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ status: 'ok', extensionConnected: bridge.isConnected() }));
-      return;
-    }
-
     res.writeHead(404);
     res.end('Not found');
   });
 
-  await mcpServer.connect(transport);
-  debugLog('MCP connected to transport');
-
   httpServer.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
-      debugLog(`Port ${PORT} is already in use — another BRMS instance may be running.`);
+      debugLog(`Port ${PORT} is already in use.`);
       console.error('');
       console.error(`  [brms] Error: port ${PORT} is already in use.`);
       console.error(`  A previous BRMS server may still be running.`);
@@ -133,6 +170,7 @@ async function main(): Promise<void> {
 
   httpServer.listen(PORT, () => {
     debugLog(`HTTP server listening on :${PORT}`);
+    console.log(`  [brms] MCP server running at http://localhost:${PORT}/mcp`);
   });
 }
 

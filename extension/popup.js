@@ -105,8 +105,19 @@ reconnectBtn.addEventListener('click', () => {
 // ── Disconnect ──────────────────────────────────────────────────
 
 disconnectBtn.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ action: 'disconnect' });
-  updateStatus();
+  disconnectBtn.disabled = true;
+  disconnectBtn.textContent = 'Disconnecting…';
+
+  chrome.runtime.sendMessage({ action: 'disconnect' }, () => {
+    // Immediately show disconnected state — don't wait for the next health poll
+    statusBadge.textContent = 'Disconnected';
+    statusBadge.className = 'badge disconnected';
+    setupView.classList.remove('hidden');
+    statusView.classList.add('hidden');
+
+    disconnectBtn.disabled = false;
+    disconnectBtn.textContent = 'Disconnect';
+  });
 });
 
 // ── Domain Management ───────────────────────────────────────────
