@@ -119,8 +119,25 @@ function connectNative() {
 
   nativePort.onDisconnect.addListener(() => {
     const err = chrome.runtime.lastError;
-    console.error('[brms] Native host disconnected', err?.message ?? '');
+    const reason = err?.message ?? '';
+    console.error('[brms] Native host disconnected', reason);
     nativePort = null;
+
+    // Permanent errors — retrying won't help. Stop the loop and surface a clear message.
+    const isPermanent =
+      reason.includes('forbidden') ||
+      reason.includes('not found') ||
+      reason.includes('not registered') ||
+      reason.includes('Access to the specified');
+
+    if (isPermanent) {
+      console.error(
+        '[brms] Native host connection permanently failed.\n' +
+        'Re-run: npx brms-host install --extension-id=' + chrome.runtime.id
+      );
+      return; // do NOT schedule reconnect
+    }
+
     scheduleReconnect();
   });
 

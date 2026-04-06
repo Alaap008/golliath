@@ -160,11 +160,32 @@ const cmd = process.argv[2];
 if (cmd === 'install') {
   install();
 } else if (cmd === 'serve') {
+  // If a BRMS server is already running (e.g. started by the Chrome extension via
+  // native messaging), don't start a second one — just report the status.
+  const port = process.env.BRMS_PORT ?? '3100';
+  try {
+    const res = await fetch(`http://localhost:${port}/health`);
+    const data = await res.json() as { status: string; extensionConnected: boolean };
+    if (data.status === 'ok') {
+      console.log('');
+      console.log(`  [brms] Server is already running at http://localhost:${port}/mcp`);
+      console.log(`  [brms] Extension connected: ${data.extensionConnected}`);
+      if (!data.extensionConnected) {
+        console.log('  [brms] The Chrome extension is not yet bridged.');
+        console.log('  [brms] Reload the BRMS extension in chrome://extensions to reconnect.');
+      } else {
+        console.log('  [brms] Everything is connected. You\'re all set!');
+      }
+      console.log('');
+      process.exit(0);
+    }
+  } catch {
+    // No server running — start one
+  }
   console.log('');
-  console.log('  Starting BRMS MCP server on http://localhost:3100/mcp');
+  console.log(`  Starting BRMS MCP server on http://localhost:${port}/mcp`);
   console.log('  Press Ctrl+C to stop.');
   console.log('');
-  // Dynamic import starts the server (index.js calls main() immediately on load)
   await import('../index.js');
 } else {
   printUsage();

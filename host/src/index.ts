@@ -152,11 +152,25 @@ async function main(): Promise<void> {
     res.end('Not found');
   });
 
+  let portRetryCount = 0;
+  const MAX_PORT_RETRIES = 3;
+
   httpServer.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
-      debugLog(`Port ${PORT} is already in use.`);
+      if (portRetryCount < MAX_PORT_RETRIES) {
+        portRetryCount++;
+        const delay = portRetryCount * 500;
+        debugLog(`Port ${PORT} in use — waiting ${delay}ms for it to be released (attempt ${portRetryCount}/${MAX_PORT_RETRIES})...`);
+        setTimeout(() => {
+          httpServer.close();
+          httpServer.listen(PORT);
+        }, delay);
+        return;
+      }
+      // Still in use after retries — another process is holding the port
+      debugLog(`Port ${PORT} is still in use after ${MAX_PORT_RETRIES} retries.`);
       console.error('');
-      console.error(`  [brms] Error: port ${PORT} is already in use.`);
+      console.error(`  [brms] Error: port ${PORT} is still in use.`);
       console.error(`  A previous BRMS server may still be running.`);
       console.error(`  To free the port:`);
       console.error(`    macOS/Linux:  lsof -ti :${PORT} | xargs kill`);
@@ -170,7 +184,7 @@ async function main(): Promise<void> {
 
   httpServer.listen(PORT, () => {
     debugLog(`HTTP server listening on :${PORT}`);
-    console.log(`  [brms] MCP server running at http://localhost:${PORT}/mcp`);
+    debugLog(`MCP server running at http://localhost:${PORT}/mcp`);
   });
 }
 
