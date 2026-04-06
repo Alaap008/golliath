@@ -16,7 +16,13 @@
       <span class="badge" id="statusBadge">Checking...</span>
     </header>
 
-    <!-- Setup View (shown when server is down) -->
+    <!-- Reconnect banner (shown whenever disconnected, regardless of server state) -->
+    <div id="reconnectBanner" class="reconnect-banner hidden">
+      <span id="reconnectMsg">Server not running — click Reconnect to start</span>
+      <button id="reconnectBtn" class="btn-reconnect">Reconnect</button>
+    </div>
+
+    <!-- Setup View (shown when server is down for the first time) -->
     <div id="setupView" class="view">
       <h2>Quick Setup</h2>
       <p class="subtitle">Three steps to connect your browser to Cursor</p>
@@ -72,12 +78,6 @@
 
     <!-- Status View (shown when server is reachable) -->
     <div id="statusView" class="view hidden">
-      <!-- Diagnostic banner when server is up but bridge not yet connected -->
-      <div id="reconnectBanner" class="reconnect-banner hidden">
-        <span>Server found — waiting for extension bridge</span>
-        <button id="reconnectBtn" class="btn-reconnect">Reconnect</button>
-      </div>
-
       <div class="status-grid">
         <div class="status-item">
           <span class="label">Host</span>
@@ -130,7 +130,7 @@
 
     <footer>
       <a href="https://github.com/Alaap008/golliath" target="_blank">GitHub</a>
-      <span class="version" id="versionLabel">v1.0.4</span>
+      <span class="version" id="versionLabel">v1.0.5</span>
     </footer>
   </div>
 

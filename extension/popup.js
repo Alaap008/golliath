@@ -12,6 +12,7 @@ const networkCount = document.getElementById('networkCount');
 const versionLabel = document.getElementById('versionLabel');
 const disconnectBtn = document.getElementById('disconnectBtn');
 const reconnectBanner = document.getElementById('reconnectBanner');
+const reconnectMsg = document.getElementById('reconnectMsg');
 const reconnectBtn = document.getElementById('reconnectBtn');
 
 const manifest = chrome.runtime.getManifest();
@@ -60,15 +61,17 @@ async function updateStatus() {
   const { serverUp, extensionBridged } = await checkHealth();
 
   if (!serverUp) {
-    // Server is not reachable
     statusBadge.textContent = 'Disconnected';
     statusBadge.className = 'badge disconnected';
     setupView.classList.remove('hidden');
     statusView.classList.add('hidden');
+    // Show reconnect banner so user can restart without re-reading the setup steps
+    reconnectMsg.textContent = 'Server not running — click Reconnect to start';
+    reconnectBanner.classList.remove('hidden');
     return;
   }
 
-  // Server is up — show status view regardless of bridge state
+  // Server is up — show status view
   setupView.classList.add('hidden');
   statusView.classList.remove('hidden');
   hostStatus.textContent = 'Running';
@@ -83,6 +86,7 @@ async function updateStatus() {
     statusBadge.textContent = 'Connecting…';
     statusBadge.className = 'badge checking';
     bridgeStatus.textContent = 'Not connected';
+    reconnectMsg.textContent = 'Server found — waiting for extension bridge';
     reconnectBanner.classList.remove('hidden');
   }
 }
@@ -109,11 +113,12 @@ disconnectBtn.addEventListener('click', () => {
   disconnectBtn.textContent = 'Disconnecting…';
 
   chrome.runtime.sendMessage({ action: 'disconnect' }, () => {
-    // Immediately show disconnected state — don't wait for the next health poll
     statusBadge.textContent = 'Disconnected';
     statusBadge.className = 'badge disconnected';
     setupView.classList.remove('hidden');
     statusView.classList.add('hidden');
+    reconnectMsg.textContent = 'Server not running — click Reconnect to start';
+    reconnectBanner.classList.remove('hidden');
 
     disconnectBtn.disabled = false;
     disconnectBtn.textContent = 'Disconnect';
