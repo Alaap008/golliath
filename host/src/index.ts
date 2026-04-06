@@ -58,8 +58,24 @@ async function main(): Promise<void> {
     sessionIdGenerator: () => randomUUID(),
   });
 
+  const CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Accept',
+  };
+
   const httpServer = createHttpServer(async (req, res) => {
     const url = new URL(req.url ?? '/', `http://localhost:${PORT}`);
+
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, CORS_HEADERS);
+      res.end();
+      return;
+    }
+
+    // Attach CORS headers to every response
+    Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
     if (url.pathname === '/mcp') {
       try {
