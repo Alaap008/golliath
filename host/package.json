@@ -1,10 +1,10 @@
 {
   "name": "brms-host",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Native messaging host for BRMS Chrome Extension — bridges browser state to Cursor via MCP",
   "type": "module",
   "bin": {
-    "brms-host": "./build/bin/install.js"
+    "brms-host": "build/bin/install.js"
   },
   "main": "./build/index.js",
   "scripts": {

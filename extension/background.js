@@ -10,6 +10,7 @@
  */
 
 const HOST_NAME = 'com.brms.host';
+const CONTENT_SCRIPT_ID = 'brms-content';
 
 let nativePort = null;
 let activeTabId = null;
@@ -17,15 +18,98 @@ let debuggerAttached = new Set();
 let networkEnabled = new Set();
 let runtimeEnabled = new Set();
 
+// Reconnect state
+let reconnectTimer = null;
+let reconnectDelay = 2000;
+const MAX_RECONNECT_DELAY = 30000;
+
 // Pending network requests (requestId -> partial entry)
 const pendingRequests = new Map();
 
+// ── Domain / Permission Management ──────────────────────────────
+
+async function getStoredDomains() {
+  const { domains = [] } = await chrome.storage.local.get('domains');
+  return domains;
+}
+
+async function saveStoredDomains(domains) {
+  await chrome.storage.local.set({ domains });
+}
+
+/**
+ * Normalize user-typed input to a valid Chrome origin pattern.
+ * Examples:
+ *   "localhost:3000"      → "http://localhost:3000/*"
+ *   "example.com"         → "https://example.com/*"
+ *   "https://example.com" → "https://example.com/*"
+ */
+function normalizeOrigin(input) {
+  input = input.trim();
+  if (!input.startsWith('http://') && !input.startsWith('https://')) {
+    const isLocalhost = input.startsWith('localhost') || input.startsWith('127.0.0.1');
+    input = isLocalhost ? `http://${input}` : `https://${input}`;
+  }
+  return input.replace(/\/\*$/, '').replace(/\/$/, '') + '/*';
+}
+
+/**
+ * Sync the dynamically registered content script to match the current
+ * list of granted origins. Handles first-time register, update, and removal.
+ */
+async function syncContentScripts(origins) {
+  const existing = await chrome.scripting.getRegisteredContentScripts({ ids: [CONTENT_SCRIPT_ID] });
+
+  if (origins.length === 0) {
+    if (existing.length > 0) {
+      await chrome.scripting.unregisterContentScripts({ ids: [CONTENT_SCRIPT_ID] });
+    }
+    return;
+  }
+
+  if (existing.length === 0) {
+    await chrome.scripting.registerContentScripts([{
+      id: CONTENT_SCRIPT_ID,
+      js: ['content.js'],
+      matches: origins,
+      runAt: 'document_idle',
+    }]);
+  } else {
+    await chrome.scripting.updateContentScripts([{
+      id: CONTENT_SCRIPT_ID,
+      matches: origins,
+    }]);
+  }
+}
+
 // ── Native Messaging ────────────────────────────────────────────
+
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  console.log(`[brms] Reconnecting in ${reconnectDelay}ms...`);
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
+    connectNative();
+  }, reconnectDelay);
+}
 
 function connectNative() {
   if (nativePort) return;
 
-  nativePort = chrome.runtime.connectNative(HOST_NAME);
+  // Clear any pending reconnect timer since we're connecting now
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+
+  try {
+    nativePort = chrome.runtime.connectNative(HOST_NAME);
+  } catch (err) {
+    console.error('[brms] Failed to connect to native host:', err?.message ?? err);
+    scheduleReconnect();
+    return;
+  }
 
   nativePort.onMessage.addListener((msg) => {
     handleHostMessage(msg);
@@ -35,7 +119,11 @@ function connectNative() {
     const err = chrome.runtime.lastError;
     console.error('[brms] Native host disconnected', err?.message ?? '');
     nativePort = null;
+    scheduleReconnect();
   });
+
+  // Reset backoff on successful connection
+  reconnectDelay = 2000;
 
   sendPush('extension_ready', { version: chrome.runtime.getManifest().version });
   console.log('[brms] Connected to native host');
@@ -106,14 +194,27 @@ async function handleHostMessage(msg) {
 
 async function handleListTabs() {
   const tabs = await chrome.tabs.query({});
-  return {
-    tabs: tabs.map((t, i) => ({
+
+  const annotated = await Promise.all(tabs.map(async (t, i) => {
+    let accessible = false;
+    try {
+      if (t.url && (t.url.startsWith('http://') || t.url.startsWith('https://'))) {
+        const origin = new URL(t.url).origin + '/*';
+        accessible = await chrome.permissions.contains({ origins: [origin] });
+      }
+    } catch {
+      // non-parseable URL (e.g. chrome://) — leave accessible: false
+    }
+    return {
       index: i,
       tabId: t.id,
       title: t.title || '',
       url: t.url || '',
-    })),
-  };
+      accessible,
+    };
+  }));
+
+  return { tabs: annotated };
 }
 
 async function handleSelectTab(payload) {
@@ -133,13 +234,25 @@ async function handleSelectTab(payload) {
     throw new Error('Provide tabId or index');
   }
 
+  // Guard: check that the user has granted permission for this tab's origin.
+  const tab = await chrome.tabs.get(targetTabId);
+  if (tab.url && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))) {
+    const origin = new URL(tab.url).origin + '/*';
+    const hasPermission = await chrome.permissions.contains({ origins: [origin] });
+    if (!hasPermission) {
+      throw new Error(
+        `No permission for ${new URL(tab.url).origin}. ` +
+        `Open the BRMS popup and add this domain first.`
+      );
+    }
+  }
+
   activeTabId = targetTabId;
 
   await attachDebugger(activeTabId);
   await enableNetworkCapture(activeTabId);
   await enableConsoleCapture(activeTabId);
 
-  const tab = await chrome.tabs.get(activeTabId);
   return {
     tabId: activeTabId,
     title: tab.title || '',
@@ -510,6 +623,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     runtimeEnabled.clear();
     pendingRequests.clear();
     sendResponse({ ok: true });
+    return false;
   }
 
   if (msg.action === 'get_status') {
@@ -517,6 +631,52 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       connected: nativePort !== null,
       activeTabId,
     });
+    return false;
+  }
+
+  if (msg.action === 'reconnect') {
+    reconnectDelay = 2000; // reset backoff for manual reconnect
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+    if (!nativePort) connectNative();
+    sendResponse({ ok: true });
+    return false;
+  }
+
+  if (msg.action === 'get_domains') {
+    getStoredDomains().then((domains) => sendResponse({ domains }));
+    return true; // async response
+  }
+
+  if (msg.action === 'domain_added') {
+    const { origin } = msg;
+    getStoredDomains().then(async (domains) => {
+      if (!domains.includes(origin)) {
+        const updated = [...domains, origin];
+        await saveStoredDomains(updated);
+        await syncContentScripts(updated);
+      }
+      sendResponse({ ok: true });
+    });
+    return true;
+  }
+
+  if (msg.action === 'remove_domain') {
+    const { origin } = msg;
+    getStoredDomains().then(async (domains) => {
+      const updated = domains.filter((d) => d !== origin);
+      try {
+        await chrome.permissions.remove({ origins: [origin] });
+      } catch (err) {
+        console.warn('[brms] Could not revoke permission for', origin, err);
+      }
+      await saveStoredDomains(updated);
+      await syncContentScripts(updated);
+      sendResponse({ ok: true });
+    });
+    return true;
   }
 
   return false;
@@ -524,5 +684,18 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
 // ── Auto-connect on install / startup ───────────────────────────
 
-chrome.runtime.onStartup.addListener(() => connectNative());
-chrome.runtime.onInstalled.addListener(() => connectNative());
+chrome.runtime.onInstalled.addListener(async () => {
+  connectNative();
+  const domains = await getStoredDomains();
+  if (domains.length > 0) {
+    await syncContentScripts(domains);
+  }
+});
+
+chrome.runtime.onStartup.addListener(async () => {
+  connectNative();
+  const domains = await getStoredDomains();
+  if (domains.length > 0) {
+    await syncContentScripts(domains);
+  }
+});

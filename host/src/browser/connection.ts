@@ -8,6 +8,7 @@ interface TabInfo {
   index: number;
   title: string;
   url: string;
+  accessible?: boolean;
 }
 
 class BrowserManager {
@@ -22,13 +23,16 @@ class BrowserManager {
     const result = await bridge.sendRequest('list_tabs');
     const tabs = (result.tabs ?? []) as TabInfo[];
 
-    if (tabs.length > 0) {
-      this.activeTabId = tabs[0].tabId;
+    // Prefer the first tab the extension has permission for; fall back to tabs[0].
+    const targetTab = tabs.find((t) => t.accessible) ?? tabs[0];
+    if (targetTab) {
+      this.activeTabId = targetTab.tabId;
       await bridge.sendRequest('select_tab', { tabId: this.activeTabId });
     }
 
     this.connected = true;
-    log.info(`Connected via extension. Found ${tabs.length} tab(s)`);
+    const accessibleCount = tabs.filter((t) => t.accessible).length;
+    log.info(`Connected via extension. Found ${tabs.length} tab(s), ${accessibleCount} accessible.`);
 
     return tabs.map((t, i) => ({
       index: i,

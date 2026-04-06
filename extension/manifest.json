@@ -1,28 +1,22 @@
 {
   "manifest_version": 3,
   "name": "BRMS — Browser Runtime MCP Server",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Expose live browser state (DOM, Network, Console, Styles) as MCP tools for AI agents like Cursor.",
   "permissions": [
     "debugger",
     "tabs",
     "activeTab",
     "scripting",
-    "nativeMessaging"
+    "nativeMessaging",
+    "storage"
   ],
-  "host_permissions": [
+  "optional_host_permissions": [
     "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_idle"
-    }
-  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

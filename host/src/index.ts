@@ -101,11 +101,15 @@ async function main(): Promise<void> {
 
   httpServer.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
-      debugLog(`Port ${PORT} in use, retrying in 1s...`);
-      setTimeout(() => {
-        httpServer.close();
-        httpServer.listen(PORT);
-      }, 1000);
+      debugLog(`Port ${PORT} is already in use — another BRMS instance may be running.`);
+      console.error('');
+      console.error(`  [brms] Error: port ${PORT} is already in use.`);
+      console.error(`  A previous BRMS server may still be running.`);
+      console.error(`  To free the port:`);
+      console.error(`    macOS/Linux:  lsof -ti :${PORT} | xargs kill`);
+      console.error(`    Windows:      netstat -ano | findstr :${PORT}  (then taskkill /PID <pid> /F)`);
+      console.error('');
+      process.exit(1);
     } else {
       debugLog(`HTTP server error: ${err.message}`);
     }

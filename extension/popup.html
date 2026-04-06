@@ -13,54 +13,79 @@
         <img src="icons/icon48.png" alt="BRMS" width="24" height="24">
         <h1>BRMS</h1>
       </div>
-      <span class="badge" id="statusBadge">Disconnected</span>
+      <span class="badge" id="statusBadge">Checking...</span>
     </header>
 
-    <!-- Setup View -->
+    <!-- Setup View (shown when server is down) -->
     <div id="setupView" class="view">
       <h2>Quick Setup</h2>
-      <p class="subtitle">Two steps to connect your browser to Cursor</p>
+      <p class="subtitle">Three steps to connect your browser to Cursor</p>
 
       <div class="step">
         <div class="step-header">
           <span class="step-num">1</span>
           <span>Install the native host</span>
         </div>
-        <div class="code-block">
-          <code id="installCmd"></code>
+        <div class="code-wrapper">
+          <pre class="code-block"><code id="installCmd"></code></pre>
           <button class="copy-btn" data-target="installCmd" title="Copy">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
           </button>
         </div>
+        <p class="hint">Run once in your terminal</p>
       </div>
 
       <div class="step">
         <div class="step-header">
           <span class="step-num">2</span>
+          <span>Start the MCP server</span>
+        </div>
+        <div class="code-wrapper">
+          <pre class="code-block"><code id="serveCmd">npx brms-host serve</code></pre>
+          <button class="copy-btn" data-target="serveCmd" title="Copy">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <p class="hint">Keep this running in a terminal tab</p>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <span class="step-num">3</span>
           <span>Add to Cursor MCP config</span>
         </div>
-        <div class="code-block">
-          <code id="mcpConfig">{
+        <div class="code-wrapper">
+          <pre class="code-block"><code id="mcpConfig">{
   "mcpServers": {
     "brms": {
       "url": "http://localhost:3100/mcp"
     }
   }
-}</code>
+}</code></pre>
           <button class="copy-btn" data-target="mcpConfig" title="Copy">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
           </button>
         </div>
         <p class="hint">Paste into <code>.cursor/mcp.json</code> in your project root</p>
       </div>
     </div>
 
-    <!-- Status View -->
+    <!-- Status View (shown when server is reachable) -->
     <div id="statusView" class="view hidden">
+      <!-- Diagnostic banner when server is up but bridge not yet connected -->
+      <div id="reconnectBanner" class="reconnect-banner hidden">
+        <span>Server found — waiting for extension bridge</span>
+        <button id="reconnectBtn" class="btn-reconnect">Reconnect</button>
+      </div>
+
       <div class="status-grid">
         <div class="status-item">
           <span class="label">Host</span>
           <span class="value" id="hostStatus">--</span>
+        </div>
+        <div class="status-item">
+          <span class="label">Bridge</span>
+          <span class="value" id="bridgeStatus">--</span>
         </div>
         <div class="status-item">
           <span class="label">Active Tab</span>
@@ -70,17 +95,42 @@
           <span class="label">Network</span>
           <span class="value" id="networkCount">0 entries</span>
         </div>
-        <div class="status-item">
-          <span class="label">Console</span>
-          <span class="value" id="consoleCount">0 entries</span>
-        </div>
       </div>
       <button id="disconnectBtn" class="btn-secondary">Disconnect</button>
     </div>
 
+    <!-- Divider -->
+    <div class="section-divider"></div>
+
+    <!-- Domains (always visible) -->
+    <div id="domainsView" class="view">
+      <div class="domains-header">
+        <h2>Allowed Domains</h2>
+        <span class="domains-count" id="domainsCount">0</span>
+      </div>
+      <p class="subtitle">BRMS only runs on these domains</p>
+
+      <ul id="domainList" class="domain-list">
+        <li class="domain-empty">No domains added yet</li>
+      </ul>
+
+      <div class="add-domain-row">
+        <input
+          id="domainInput"
+          type="text"
+          class="domain-input"
+          placeholder="localhost:3000 or example.com"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="addDomainBtn" class="btn-add">Add</button>
+      </div>
+      <p id="domainError" class="domain-error hidden"></p>
+    </div>
+
     <footer>
       <a href="https://github.com/Alaap008/golliath" target="_blank">GitHub</a>
-      <span class="version" id="versionLabel">v1.0.0</span>
+      <span class="version" id="versionLabel">v1.0.3</span>
     </footer>
   </div>
 

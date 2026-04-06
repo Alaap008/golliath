@@ -9,20 +9,22 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 13px;
   color: #e0e0e0;
-  background: #1a1a2e;
+  background: #13131f;
 }
 
 .container {
-  padding: 16px;
+  padding: 14px 16px 12px;
 }
+
+/* ── Header ──────────────────────────────────────────────────── */
 
 header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #2d2d44;
+  border-bottom: 1px solid #252538;
+  margin-bottom: 14px;
 }
 
 .logo {
@@ -32,19 +34,19 @@ header {
 }
 
 .logo h1 {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #fff;
   letter-spacing: 0.5px;
 }
 
 .badge {
-  font-size: 11px;
-  padding: 3px 8px;
+  font-size: 10px;
+  padding: 3px 9px;
   border-radius: 10px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
 }
 
 .badge.connected {
@@ -57,31 +59,48 @@ header {
   color: #f87171;
 }
 
+.badge.checking {
+  background: #1e1c38;
+  color: #a5b4fc;
+}
+
+/* ── Views ───────────────────────────────────────────────────── */
+
 .view.hidden {
   display: none;
 }
 
 h2 {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   color: #fff;
-  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
 }
 
 .subtitle {
-  color: #8888a0;
-  margin-bottom: 14px;
+  color: #6b6b80;
+  font-size: 11px;
+  margin-top: 3px;
+  margin-bottom: 12px;
 }
 
+/* ── Setup Steps ─────────────────────────────────────────────── */
+
 .step {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+}
+
+.step:last-child {
+  margin-bottom: 0;
 }
 
 .step-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   margin-bottom: 6px;
+  font-size: 12px;
   font-weight: 500;
   color: #c0c0d0;
 }
@@ -90,96 +109,169 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #6c5ce7;
   color: #fff;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   flex-shrink: 0;
 }
 
-.code-block {
+/* ── Code wrapper — keeps copy button anchored outside scroll ── */
+
+.code-wrapper {
   position: relative;
-  background: #12121e;
-  border: 1px solid #2d2d44;
+}
+
+.code-block {
+  display: block;
+  background: #0d0d18;
+  border: 1px solid #252538;
   border-radius: 6px;
-  padding: 10px 12px;
-  padding-right: 36px;
+  padding: 8px 42px 8px 10px;
   font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 12px;
+  font-size: 11px;
   color: #a5b4fc;
   white-space: pre;
   overflow-x: auto;
+  line-height: 1.55;
+  /* ensure scrollbar doesn't overlap border-radius */
+  scrollbar-width: thin;
+  scrollbar-color: #2d2d44 transparent;
 }
 
+.code-block::-webkit-scrollbar {
+  height: 3px;
+}
+
+.code-block::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.code-block::-webkit-scrollbar-thumb {
+  background: #2d2d44;
+  border-radius: 2px;
+}
+
+/* Copy button is anchored to the wrapper, NOT inside the scrollable pre */
 .copy-btn {
   position: absolute;
   top: 6px;
   right: 6px;
-  background: transparent;
-  border: 1px solid #3d3d5c;
+  z-index: 1;
+  background: #13131f;
+  border: 1px solid #2d2d44;
   border-radius: 4px;
-  padding: 4px;
+  padding: 4px 5px;
   cursor: pointer;
-  color: #8888a0;
+  color: #555570;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.15s;
+  line-height: 0;
 }
 
 .copy-btn:hover {
-  background: #2d2d44;
-  color: #fff;
+  background: #1e1e30;
+  color: #a5b4fc;
+  border-color: #3d3d5c;
 }
 
 .copy-btn.copied {
   border-color: #4ade80;
   color: #4ade80;
+  background: #0d1f14;
 }
 
 .hint {
-  margin-top: 6px;
-  color: #6b6b80;
+  margin-top: 5px;
+  color: #4a4a60;
   font-size: 11px;
 }
 
 .hint code {
-  background: #12121e;
+  background: #0d0d18;
   padding: 1px 4px;
   border-radius: 3px;
+  font-size: 10px;
+  color: #a5b4fc;
+}
+
+/* ── Reconnect banner ────────────────────────────────────────── */
+
+.reconnect-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #1e1c38;
+  border: 1px solid #3d3a6e;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
   font-size: 11px;
   color: #a5b4fc;
 }
 
+.reconnect-banner.hidden {
+  display: none;
+}
+
+.btn-reconnect {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  background: #6c5ce7;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.btn-reconnect:hover {
+  background: #7d6ff0;
+}
+
+.btn-reconnect:disabled {
+  background: #3d3d5c;
+  color: #6b6b80;
+  cursor: not-allowed;
+}
+
+/* ── Status Grid ─────────────────────────────────────────────── */
+
 .status-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .status-item {
-  background: #12121e;
-  border: 1px solid #2d2d44;
+  background: #0d0d18;
+  border: 1px solid #252538;
   border-radius: 6px;
-  padding: 10px;
+  padding: 8px 10px;
 }
 
 .status-item .label {
   display: block;
-  font-size: 11px;
-  color: #6b6b80;
+  font-size: 10px;
+  color: #555570;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .status-item .value {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   color: #e0e0e0;
   font-weight: 500;
   overflow: hidden;
@@ -189,11 +281,11 @@ h2 {
 
 .btn-secondary {
   width: 100%;
-  padding: 8px;
-  background: #2d2d44;
-  border: 1px solid #3d3d5c;
+  padding: 7px;
+  background: #1e1e30;
+  border: 1px solid #2d2d44;
   border-radius: 6px;
-  color: #c0c0d0;
+  color: #8888a0;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -201,30 +293,220 @@ h2 {
 }
 
 .btn-secondary:hover {
-  background: #3d3d5c;
-  color: #fff;
+  background: #252538;
+  color: #e0e0e0;
+  border-color: #3d3d5c;
 }
+
+/* ── Section Divider ─────────────────────────────────────────── */
+
+.section-divider {
+  height: 1px;
+  background: #252538;
+  margin: 14px 0;
+}
+
+/* ── Domains Section ─────────────────────────────────────────── */
+
+.domains-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 3px;
+}
+
+.domains-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #1e1e30;
+  color: #555570;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.domains-count.has-domains {
+  background: #1a1240;
+  color: #a5b4fc;
+}
+
+.domain-list {
+  list-style: none;
+  margin-bottom: 8px;
+  max-height: 108px;
+  overflow-y: auto;
+  border: 1px solid #252538;
+  border-radius: 6px;
+  background: #0d0d18;
+  scrollbar-width: thin;
+  scrollbar-color: #2d2d44 transparent;
+}
+
+.domain-list::-webkit-scrollbar {
+  width: 3px;
+}
+
+.domain-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.domain-list::-webkit-scrollbar-thumb {
+  background: #2d2d44;
+  border-radius: 2px;
+}
+
+.domain-empty {
+  padding: 11px 10px;
+  color: #3d3d5c;
+  font-style: italic;
+  font-size: 11px;
+  text-align: center;
+}
+
+.domain-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 6px 6px 10px;
+  border-bottom: 1px solid #191928;
+  gap: 6px;
+}
+
+.domain-item:last-child {
+  border-bottom: none;
+}
+
+.domain-item:hover {
+  background: #131320;
+}
+
+.domain-origin {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  color: #a5b4fc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.domain-remove {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: #3d3d5c;
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.domain-remove:hover {
+  color: #f87171;
+  background: #2a1212;
+}
+
+.add-domain-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.domain-input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 9px;
+  background: #0d0d18;
+  border: 1px solid #252538;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 11px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.domain-input::placeholder {
+  color: #3d3d5c;
+}
+
+.domain-input:focus {
+  border-color: #6c5ce7;
+}
+
+.btn-add {
+  flex-shrink: 0;
+  padding: 7px 13px;
+  background: #6c5ce7;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.btn-add:hover {
+  background: #7d6ff0;
+}
+
+.btn-add:active {
+  background: #5a4bd1;
+}
+
+.btn-add:disabled {
+  background: #2d2d44;
+  color: #555570;
+  cursor: not-allowed;
+}
+
+.domain-error {
+  margin-top: 6px;
+  color: #f87171;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.domain-error.hidden {
+  display: none;
+}
+
+/* ── Footer ──────────────────────────────────────────────────── */
 
 footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 14px;
+  margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px solid #2d2d44;
+  border-top: 1px solid #252538;
 }
 
 footer a {
-  color: #6c5ce7;
+  color: #555570;
   text-decoration: none;
   font-size: 11px;
+  transition: color 0.15s;
 }
 
 footer a:hover {
-  text-decoration: underline;
+  color: #a5b4fc;
 }
 
 .version {
-  color: #4a4a60;
+  color: #333348;
   font-size: 11px;
 }

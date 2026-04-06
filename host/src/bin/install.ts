@@ -1,15 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * brms-host install [--extension-id=<id>]
+ * brms-host CLI
  *
- * Registers the native messaging host manifest so Chrome can find it.
- * Also prints the Cursor MCP config.
- *
- * The extension ID is required. You can find it on chrome://extensions
- * after loading the unpacked extension. Pass it via:
- *   --extension-id=<id>     CLI flag
- *   BRMS_EXTENSION_ID=<id>  environment variable
+ * Commands:
+ *   install  --extension-id=<id>   Register the native messaging host for Chrome
+ *   serve                           Start the MCP server on http://localhost:3100/mcp
  */
 
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -58,10 +54,9 @@ function install(): void {
     console.error('');
     console.error('  Error: Extension ID is required.');
     console.error('');
-    console.error('  1. Load the BRMS extension in Chrome:');
-    console.error('     chrome://extensions → Enable Developer mode → Load unpacked');
+    console.error('  1. Install the BRMS Chrome extension from the Web Store.');
     console.error('');
-    console.error('  2. Copy the extension ID from the extension card, then run:');
+    console.error('  2. Copy the extension ID from chrome://extensions, then run:');
     console.error('');
     console.error('     npx brms-host install --extension-id=<your-extension-id>');
     console.error('');
@@ -109,21 +104,54 @@ function install(): void {
   }
 
   console.log('');
-  console.log('  BRMS Native Messaging Host installed successfully!');
+  console.log('  ✓ BRMS native messaging host installed!');
   console.log('');
-  console.log(`  Extension ID: ${extensionId}`);
-  console.log(`  Manifest:     ${manifestPath}`);
-  console.log(`  Host:         ${manifest.path}`);
+  console.log(`  Extension ID : ${extensionId}`);
+  console.log(`  Manifest     : ${manifestPath}`);
+  console.log(`  Host binary  : ${manifest.path}`);
   console.log('');
-  console.log('  Next step — add to your project\'s .cursor/mcp.json:');
+  console.log('  ─────────────────────────────────────────────────────');
+  console.log('  Complete setup (do all 4 steps):');
   console.log('');
-  console.log('     {');
-  console.log('       "mcpServers": {');
-  console.log('         "brms": {');
-  console.log('           "url": "http://localhost:3100/mcp"');
-  console.log('         }');
-  console.log('       }');
-  console.log('     }');
+  console.log('  2.  Start the MCP server (keep this running):');
+  console.log('');
+  console.log('        npx brms-host serve');
+  console.log('');
+  console.log('  3.  Make sure Chrome is open with the BRMS extension');
+  console.log('      active. Open the extension popup and add any domains');
+  console.log('      you want to inspect (e.g. localhost:3000).');
+  console.log('');
+  console.log('  4.  Add to your project\'s .cursor/mcp.json:');
+  console.log('');
+  console.log('        {');
+  console.log('          "mcpServers": {');
+  console.log('            "brms": {');
+  console.log('              "url": "http://localhost:3100/mcp"');
+  console.log('            }');
+  console.log('          }');
+  console.log('        }');
+  console.log('');
+  console.log('  If the extension popup shows "DISCONNECTED" after');
+  console.log('  starting the server, click the Reconnect button in');
+  console.log('  the popup or reload the extension.');
+  console.log('  ─────────────────────────────────────────────────────');
+  console.log('');
+}
+
+function printUsage(): void {
+  console.log('');
+  console.log('  Usage: brms-host <command> [options]');
+  console.log('');
+  console.log('  Commands:');
+  console.log('    install    Register the native messaging host for Chrome');
+  console.log('    serve      Start the MCP server on http://localhost:3100/mcp');
+  console.log('');
+  console.log('  Options (install):');
+  console.log('    --extension-id=<id>   Chrome extension ID (from chrome://extensions)');
+  console.log('');
+  console.log('  Examples:');
+  console.log('    npx brms-host install --extension-id=abcdefghijklmnopqrstuvwxyzabcdef');
+  console.log('    npx brms-host serve');
   console.log('');
 }
 
@@ -131,13 +159,14 @@ const cmd = process.argv[2];
 
 if (cmd === 'install') {
   install();
+} else if (cmd === 'serve') {
+  console.log('');
+  console.log('  Starting BRMS MCP server on http://localhost:3100/mcp');
+  console.log('  Press Ctrl+C to stop.');
+  console.log('');
+  // Dynamic import starts the server (index.js calls main() immediately on load)
+  await import('../index.js');
 } else {
-  console.log('Usage: brms-host install --extension-id=<id>');
-  console.log('');
-  console.log('Commands:');
-  console.log('  install    Register the native messaging host for Chrome');
-  console.log('');
-  console.log('Options:');
-  console.log('  --extension-id=<id>  Chrome extension ID (from chrome://extensions)');
-  process.exit(1);
+  printUsage();
+  process.exit(cmd ? 1 : 0);
 }
